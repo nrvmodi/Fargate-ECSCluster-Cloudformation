@@ -81,6 +81,58 @@ Resources:
       InternetGatewayId: !Ref InternetGateway
       VpcId: !Ref VPC
 
+  # Create DB Subnet Group
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: For Launching RDS
+      DBSubnetGroupName: db-subnet-group
+      SubnetIds:
+      - !Ref SubnetA
+      - !Ref SubnetB
+
+  # Create DB Security Group
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: For RDS Instance
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: RDS-SecurityGroup
+
+  # Attach Secuirty Group Rule
+  DbIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DbSecurityGroup
+      IpProtocol: tcp
+      FromPort: '5432'
+      ToPort: '5432'
+      CidrIp: 172.10.0.0/16
+
+  # Create Postgres Instance
+  PostgresRDS:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      AllocatedStorage: 20
+      AvailabilityZone: !Join ['', [!Ref "AWS::Region", 'a']]
+      DBInstanceClass: db.t2.micro
+      DBInstanceIdentifier: Postgres-RDS
+      DBName: RayApp
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      Engine: postgres
+      MasterUsername: RayApp
+      MasterUserPassword: coldplay121
+      MultiAZ: false
+      Port: 5432
+      PubliclyAccessible: false
+      Tags:
+        - Key: Name
+          Value: RDS-Postgres
+      VPCSecurityGroups:
+        - !Ref DbSecurityGroup
+
   # Create Access Role for ECS-Tasks
   ExecutionRole:
     Type: AWS::IAM::Role
